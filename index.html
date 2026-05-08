@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f1923" />
+  <meta name="description" content="App de inventario de ventas diarias" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ventas" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Inventario de Ventas</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1923;
+      --bg2: #111c11;
+      --bg3: #0d1f0d;
+      --border: #2a3a2a;
+      --green: #2ecc71;
+      --green2: #27ae60;
+      --muted: #7cb97c;
+      --text: #e8f5e2;
+      --purple: #9b59b6;
+      --red: #e74c3c;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', 'Courier New', monospace;
+      font-size: 15px;
+      overscroll-behavior: none;
+    }
+
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(90deg, #1a2a1a, #0f2510);
+      border-bottom: 2px solid var(--green);
+      padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header-title { font-size: 17px; font-weight: 800; color: var(--green); letter-spacing: 1px; }
+    .header-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .header-total { background: var(--bg3); border: 1px solid var(--green); border-radius: 10px; padding: 8px 14px; text-align: center; }
+    .header-total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .header-total-amount { font-size: 22px; font-weight: 800; color: var(--green); }
+    .header-total-count { font-size: 10px; color: var(--muted); }
+
+    /* TABS */
+    .tabs { display: flex; background: #111a11; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .tab {
+      flex: 1; padding: 13px 8px; border: none; background: transparent;
+      color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all .2s;
+    }
+    .tab.active { background: var(--bg2); color: var(--green); font-weight: 700; border-bottom-color: var(--green); }
+
+    /* CONTENT */
+    .content { flex: 1; overflow-y: auto; padding: 18px 14px; }
+
+    /* FORM */
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .section-title { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px; }
+    .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+    .field label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .field input, .field select {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 13px; color: var(--text); font-family: inherit; font-size: 14px;
+      width: 100%; transition: border-color .2s; -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--green); }
+    .field input::placeholder { color: #4a6a4a; }
+
+    /* MÉTODOS */
+    .metodos { display: flex; flex-wrap: wrap; gap: 7px; }
+    .metodo-btn {
+      padding: 9px 14px; border-radius: 8px; border: 2px solid var(--border);
+      background: var(--bg3); color: var(--muted); font-family: inherit;
+      font-size: 13px; cursor: pointer; transition: all .15s;
+    }
+    .metodo-btn.active { border-color: var(--green); background: #1a3a1a; color: var(--green); font-weight: 700; }
+
+    /* BOTÓN REGISTRAR */
+    .btn-registrar {
+      width: 100%; padding: 15px; margin-top: 8px;
+      background: linear-gradient(90deg, var(--green2), var(--green));
+      color: #fff; border: none; border-radius: 10px;
+      font-family: inherit; font-weight: 800; font-size: 15px;
+      cursor: pointer; letter-spacing: 1px;
+      box-shadow: 0 4px 20px rgba(46,204,113,.3);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-registrar:active { transform: scale(.98); }
+
+    /* FILTROS */
+    .filtros { display: flex; gap: 8px; margin-bottom: 14px; }
+    .filtros input, .filtros select {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 12px; color: var(--text); font-family: inherit; font-size: 13px;
+      -webkit-appearance: none;
+    }
+    .filtros input { flex: 1; }
+    .filtros select { min-width: 120px; }
+    .filtros input:focus, .filtros select:focus { outline: none; border-color: var(--green); }
+
+    /* RESUMEN */
+    .resumen { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .resumen-chip {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--muted);
+    }
+    .resumen-chip span { color: var(--green); font-weight: 700; }
+    .resumen-total { border-color: var(--green); margin-left: auto; }
+
+    /* LISTA */
+    .lista { display: flex; flex-direction: column; gap: 10px; }
+    .venta-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+      transition: border-color .2s;
+    }
+    .venta-producto { font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 5px; }
+    .venta-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--muted); }
+    .badge {
+      color: #fff; border-radius: 5px; padding: 2px 8px; font-weight: 600; font-size: 11px;
+    }
+    .venta-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+    .venta-precio { font-size: 16px; font-weight: 800; color: var(--green); white-space: nowrap; }
+    .btn-del {
+      background: none; border: 1px solid #3a2a2a; border-radius: 6px;
+      color: var(--red); cursor: pointer; padding: 4px 9px; font-size: 14px;
+      font-family: inherit; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-del:active { background: #2a1111; }
+
+    .empty { text-align: center; color: #4a6a4a; padding: 48px 0; font-size: 14px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 999; color: #fff; border-radius: 10px; padding: 12px 22px;
+      font-weight: 700; font-size: 14px; box-shadow: 0 4px 24px #0008;
+      animation: fadein .3s; white-space: nowrap;
+    }
+    .toast.ok { background: var(--green2); }
+    .toast.err { background: var(--red); }
+
+    /* MODAL */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 998;
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal {
+      background: var(--bg2); border: 2px solid var(--red); border-radius: 16px;
+      padding: 28px 24px; max-width: 320px; width: 100%; text-align: center;
+    }
+    .modal p { margin-bottom: 8px; font-size: 16px; }
+    .modal small { color: #aaa; font-size: 13px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+    .modal-btns button {
+      padding: 10px 22px; border: none; border-radius: 8px;
+      font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+
+    /* PWA install banner */
+    .install-banner {
+      background: #1a2a1a; border-top: 1px solid var(--green);
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; font-size: 13px;
+    }
+    .install-banner button {
+      background: var(--green); color: #fff; border: none; border-radius: 7px;
+      padding: 8px 14px; font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer;
+    }
+    .btn-close-banner { background: none !important; color: var(--muted) !important; font-size: 18px !important; padding: 4px 8px !important; }
+
+    @keyframes fadein { from { opacity:0; transform:translateX(-50%) translateY(-10px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }
+
+    /* Safe area for iOS */
+    .content { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+    .tabs { padding-bottom: env(safe-area-inset-bottom); }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="header-title">📦 VENTAS</div>
+      <div class="header-date" id="fecha-hoy"></div>
+    </div>
+    <div class="header-total">
+      <div class="header-total-label">Total Hoy</div>
+      <div class="header-total-amount" id="total-hoy">S/ 0.00</div>
+      <div class="header-total-count" id="count-hoy">0 ventas</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setVista('registrar')">➕ Registrar</button>
+    <button class="tab" onclick="setVista('historial')">📋 Historial</button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="install-banner" id="install-banner" style="display:none">
+    <span>📲 Instala la app en tu celular</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="instalarApp()">Instalar</button>
+      <button class="btn-close-banner" onclick="cerrarBanner()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal" style="display:none">
+  <div class="modal">
+    <p>¿Eliminar esta venta?</p>
+    <small>Esta acción no se puede deshacer.</small>
+    <div class="modal-btns">
+      <button style="background:#333;color:#aaa" onclick="cerrarModal()">Cancelar</button>
+      <button style="background:#c0392b;color:#fff" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const METODOS = ["Efectivo","Yape","Plin","Tarjeta","Transferencia"];
+const COLORES = { Yape:"#9b59b6", Plin:"#3498db", Efectivo:"#27ae60", Tarjeta:"#e67e22", Transferencia:"#2980b9" };
+
+let ventas = JSON.parse(localStorage.getItem("ventas_inv") || "[]");
+let vista = "registrar";
+let pendingDel = null;
+let deferredPrompt = null;
+
+// PWA install prompt
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem("banner_closed")) {
+    document.getElementById("install-banner").style.display = "flex";
+  }
+});
+
+function instalarApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    cerrarBanner();
+  });
+}
+
+function cerrarBanner() {
+  document.getElementById("install-banner").style.display = "none";
+  localStorage.setItem("banner_closed", "1");
+}
+
+function guardar() {
+  localStorage.setItem("ventas_inv", JSON.stringify(ventas));
+}
+
+function fmt(iso) {
+  const d = new Date(iso);
+  return {
+    fecha: d.toLocaleDateString("es-PE",{day:"2-digit",month:"2-digit",year:"numeric"}),
+    hora: d.toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"})
+  };
+}
+
+function actualizarHeader() {
+  const hoy = new Date().toDateString();
+  const vHoy = ventas.filter(v => new Date(v.fecha).toDateString() === hoy);
+  const total = vHoy.reduce((s,v) => s + v.precio, 0);
+  document.getElementById("total-hoy").textContent = "S/ " + total.toFixed(2);
+  document.getElementById("count-hoy").textContent = vHoy.length + " venta" + (vHoy.length !== 1 ? "s" : "");
+  document.getElementById("fecha-hoy").textContent = new Date().toLocaleDateString("es-PE",{weekday:"long",day:"numeric",month:"long"});
+}
+
+function setVista(v) {
+  vista = v;
+  document.querySelectorAll(".tab").forEach((t,i) => {
+    t.classList.toggle("active", (i===0 && v==="registrar") || (i===1 && v==="historial"));
+  });
+  render();
+}
+
+function showToast(msg, tipo="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast " + tipo;
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 2500);
+}
+
+function render() {
+  actualizarHeader();
+  if (vista === "registrar") renderRegistrar();
+  else renderHistorial();
+}
+
+function renderRegistrar() {
+  const metodo = window._metodo || "Efectivo";
+  document.getElementById("content").innerHTML = `
+    <div class="card">
+      <div class="section-title">NUEVA VENTA</div>
+      <div class="field">
+        <label>Producto</label>
+        <input id="f-producto" type="text" placeholder="Ej: Camisa azul talla M" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Precio (S/)</label>
+        <input id="f-precio" type="number" min="0" step="0.5" placeholder="0.00" inputmode="decimal" />
+      </div>
+      <div class="field">
+        <label>Método de pago</label>
+        <div class="metodos">
+          ${METODOS.map(m => `<button class="metodo-btn ${m===metodo?'active':''}" onclick="selMetodo('${m}')">${m}</button>`).join("")}
+        </div>
+      </div>
+      ${metodo === "Yape" ? `
+      <div class="field">
+        <label>Código de operación Yape</label>
+        <input id="f-yape" type="text" placeholder="Ej: 123456789" inputmode="numeric" style="border-color:#9b59b6" />
+      </div>` : ""}
+      <button class="btn-registrar" onclick="registrar()">✓ REGISTRAR VENTA</button>
+    </div>
+  `;
+}
+
+function selMetodo(m) {
+  window._metodo = m;
+  renderRegistrar();
+}
+
+function registrar() {
+  const producto = document.getElementById("f-producto")?.value.trim();
+  const precio = parseFloat(document.getElementById("f-precio")?.value);
+  const metodo = window._metodo || "Efectivo";
+  const yape = document.getElementById("f-yape")?.value.trim() || "";
+
+  if (!producto) return showToast("Ingresa el nombre del producto", "err");
+  if (!precio || precio <= 0) return showToast("Ingresa un precio válido", "err");
+  if (metodo === "Yape" && !yape) return showToast("Ingresa el código Yape", "err");
+
+  ventas.unshift({ id: Date.now(), fecha: new Date().toISOString(), producto, metodo, codigoYape: metodo==="Yape"?yape:"", precio });
+  guardar();
+  window._metodo = "Efectivo";
+  renderRegistrar();
+  showToast("¡Venta registrada!");
+}
+
+function renderHistorial() {
+  const busqueda = window._busqueda || "";
+  const filtroMetodo = window._filtroMetodo || "Todos";
+
+  const filtradas = ventas.filter(v => {
+    const b = v.producto.toLowerCase().includes(busqueda.toLowerCase()) ||
+              v.codigoYape.toLowerCase().includes(busqueda.toLowerCase());
+    const m = filtroMetodo === "Todos" || v.metodo === filtroMetodo;
+    return b && m;
+  });
+
+  const countM = (m) => filtradas.filter(v => v.metodo === m).length;
+  const totalFil = filtradas.reduce((s,v) => s + v.precio, 0);
+
+  const chips = METODOS.filter(m => countM(m) > 0)
+    .map(m => `<div class="resumen-chip">${m}: <span>${countM(m)}</span></div>`).join("");
+
+  const items = filtradas.length === 0
+    ? `<div class="empty">No hay ventas registradas.</div>`
+    : filtradas.map(v => {
+        const {fecha,hora} = fmt(v.fecha);
+        return `
+        <div class="venta-card">
+          <div style="flex:1;min-width:0">
+            <div class="venta-producto">${escHtml(v.producto)}</div>
+            <div class="venta-meta">
+              <span>📅 ${fecha}</span>
+              <span>🕐 ${hora}</span>
+              <span class="badge" style="background:${COLORES[v.metodo]||'#555'}">${v.metodo}</span>
+              ${v.codigoYape ? `<span>🔑 ${escHtml(v.codigoYape)}</span>` : ""}
+            </div>
+          </div>
+          <div class="venta-right">
+            <div class="venta-precio">S/ ${v.precio.toFixed(2)}</div>
+            <button class="btn-del" onclick="pedirEliminar(${v.id})">✕</button>
+          </div>
+        </div>`;
+      }).join("");
+
+  document.getElementById("content").innerHTML = `
+    <div class="filtros">
+      <input type="text" placeholder="🔍 Buscar..." value="${escHtml(busqueda)}" oninput="window._busqueda=this.value;renderHistorial()" />
+      <select onchange="window._filtroMetodo=this.value;renderHistorial()">
+        <option ${filtroMetodo==="Todos"?"selected":""}>Todos</option>
+        ${METODOS.map(m=>`<option ${filtroMetodo===m?"selected":""}>${m}</option>`).join("")}
+      </select>
+    </div>
+    <div class="resumen">
+      ${chips}
+      <div class="resumen-chip resumen-total">Total: <span>S/ ${totalFil.toFixed(2)}</span></div>
+    </div>
+    <div class="lista">${items}</div>
+  `;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function pedirEliminar(id) {
+  pendingDel = id;
+  document.getElementById("modal").style.display = "flex";
+}
+
+function cerrarModal() {
+  pendingDel = null;
+  document.getElementById("modal").style.display = "none";
+}
+
+function confirmarEliminar() {
+  ventas = ventas.filter(v => v.id !== pendingDel);
+  guardar();
+  cerrarModal();
+  showToast("Venta eliminada", "err");
+  render();
+}
+
+// Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+render();
+</script>
+</body>
+</html>
