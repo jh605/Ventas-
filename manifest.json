@@ -1,7 +1,7 @@
 {
-  "name": "Inventario de Ventas",
-  "short_name": "Ventas",
-  "description": "Registra tus ventas diarias fácilmente",
+  "name": "Registro de gastos",
+  "short_name": "gasto",
+  "description": "Registra tus gastos diarios facilmente",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f1923",
